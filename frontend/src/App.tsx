@@ -20,26 +20,44 @@ export default function App() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState<ProjectQuery>({
     sort: 'created_at',
     direction: 'desc',
   })
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await fetchProjects(query)
-      setProjects(result.data)
-    } catch {
-      setError('Failed to load projects. Is the backend running?')
-    } finally {
-      setLoading(false)
-    }
-  }, [query])
+  // Debounce: only push the search box into the query 350ms after typing stops.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery((prev) => ({ ...prev, search: searchInput }))
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const result = await fetchProjects(query, signal)
+        setProjects(result.data)
+        setLoading(false)
+      } catch (err) {
+        // Superseded request was aborted — let the newer request own the state.
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return
+        }
+        setError('Failed to load projects. Is the backend running?')
+        setLoading(false)
+      }
+    },
+    [query],
+  )
 
   useEffect(() => {
-    void load()
+    const controller = new AbortController()
+    void load(controller.signal)
+    return () => controller.abort()
   }, [load])
 
   function updateQuery<K extends keyof ProjectQuery>(key: K, value: ProjectQuery[K]) {
@@ -63,8 +81,8 @@ export default function App() {
           <input
             type="search"
             placeholder="Search client or project…"
-            value={query.search ?? ''}
-            onChange={(e) => updateQuery('search', e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
 
           <select

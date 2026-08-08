@@ -86,7 +86,10 @@ export interface ProjectQuery {
   direction?: 'asc' | 'desc'
 }
 
-export function fetchProjects(query: ProjectQuery = {}): Promise<Paginated<Project>> {
+export function fetchProjects(
+  query: ProjectQuery = {},
+  signal?: AbortSignal,
+): Promise<Paginated<Project>> {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
     if (value) {
@@ -94,7 +97,7 @@ export function fetchProjects(query: ProjectQuery = {}): Promise<Paginated<Proje
     }
   }
   const qs = params.toString()
-  return request<Paginated<Project>>(`/projects${qs ? `?${qs}` : ''}`)
+  return request<Paginated<Project>>(`/projects${qs ? `?${qs}` : ''}`, { signal })
 }
 
 export function createProject(data: ProjectFormData): Promise<Project> {
