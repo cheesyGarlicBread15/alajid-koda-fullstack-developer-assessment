@@ -158,6 +158,52 @@ button:disabled {
   font-weight: 500;
 }
 
+/* Header / navigation */
+.title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-header h2 {
+  margin: 0;
+}
+
+.button-link {
+  display: inline-block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.button-link:hover {
+  background: var(--primary-hover);
+}
+
+.button-link.ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.button-link.ghost:hover {
+  background: transparent;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Filters */
 .filters {
   display: flex;
