@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Enums\Project\ProjectPriority;
 use App\Enums\Project\ProjectStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Override;
 
 class Project extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'client_name',
         'project_name',
