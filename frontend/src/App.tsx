@@ -1,122 +1,117 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  fetchProjects,
+  PRIORITY_OPTIONS,
+  STATUS_OPTIONS,
+  type Project,
+  type ProjectQuery,
+} from './api.ts'
+import { ProjectForm } from './components/ProjectForm.tsx'
+import { ProjectList } from './components/ProjectList.tsx'
 
-function App() {
-  const [count, setCount] = useState(0)
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'created_at:desc', label: 'Newest first' },
+  { value: 'due_date:asc', label: 'Due date (soonest)' },
+  { value: 'due_date:desc', label: 'Due date (latest)' },
+  { value: 'client_name:asc', label: 'Client (A–Z)' },
+]
+
+export default function App() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState<ProjectQuery>({
+    sort: 'created_at',
+    direction: 'desc',
+  })
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await fetchProjects(query)
+      setProjects(result.data)
+    } catch {
+      setError('Failed to load projects. Is the backend running?')
+    } finally {
+      setLoading(false)
+    }
+  }, [query])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  function updateQuery<K extends keyof ProjectQuery>(key: K, value: ProjectQuery[K]) {
+    setQuery((prev) => ({ ...prev, [key]: value }))
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <div className="app">
+      <header className="app-header">
+        <h1>Client Project Tracker</h1>
+        <p className="muted">Track client projects, status, and priorities.</p>
+      </header>
+
+      <section className="panel">
+        <h2>New Project</h2>
+        <ProjectForm onCreated={load} />
       </section>
 
-      <div className="ticks"></div>
+      <section className="panel">
+        <div className="filters">
+          <input
+            type="search"
+            placeholder="Search client or project…"
+            value={query.search ?? ''}
+            onChange={(e) => updateQuery('search', e.target.value)}
+          />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <select
+            value={query.status ?? ''}
+            onChange={(e) => updateQuery('status', e.target.value as ProjectQuery['status'])}
+          >
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={query.priority ?? ''}
+            onChange={(e) => updateQuery('priority', e.target.value as ProjectQuery['priority'])}
+          >
+            <option value="">All priorities</option>
+            {PRIORITY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={`${query.sort}:${query.direction}`}
+            onChange={(e) => {
+              const [sort, direction] = e.target.value.split(':')
+              setQuery((prev) => ({
+                ...prev,
+                sort,
+                direction: direction as ProjectQuery['direction'],
+              }))
+            }}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+
+        <ProjectList projects={projects} loading={loading} error={error} />
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </div>
   )
 }
-
-export default App
